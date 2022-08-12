@@ -9,7 +9,7 @@ const getUser = (req, res) => User.findById(req.params.userId)
   .catch((err) => {
     if (err.name === 'UserNotFound') {
       res.status(err.status).send(err);
-    } else if (err.name === 'ValidationError') {
+    } else if (err.name === 'ValidationError' || err.name === 'CastError') {
       res.status(400).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
     } else {
       res.status(500).send({ message: `Ошибка сервера ${err}` });
