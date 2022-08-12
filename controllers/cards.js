@@ -9,6 +9,8 @@ const deleteCard = (req, res) => Card.findByIdAndRemove(req.params.cardId)
   .catch((err) => {
     if (err.name === 'CardNotFound') {
       res.status(err.status).send(err);
+    } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+      res.status(400).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
     } else {
       res.status(500).send({ message: `Ошибка сервера ${err}` });
     }
@@ -57,9 +59,14 @@ const dislikeCard = (req, res) => Card.findByIdAndUpdate(
   { $pull: { likes: req.user._id } }, // убрать _id из массива
   { new: true, runValidators: true },
 )
+  .orFail(() => {
+    throw new CardNotFound();
+  })
   .then((card) => res.status(200).send({ card }))
   .catch((err) => {
-    if (err.name === 'CastError') {
+    if (err.name === 'CardNotFound') {
+      res.status(err.status).send(err);
+    } else if (err.name === 'CastError') {
       res.status(400).send({ message: `Переданы некорректные данные при снятии лайка ${err}` });
     } else {
       res.status(500).send({ message: `Ошибка сервера ${err}` });
