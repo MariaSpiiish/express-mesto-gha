@@ -1,36 +1,39 @@
 const User = require('../models/user');
 const UserNotFound = require('../custom errors/UserNotFound');
+const {
+  ok, created, incorrectData, internalError,
+} = require('../custom errors/error_status');
 
 const getUser = (req, res) => User.findById(req.params.userId)
   .orFail(() => {
     throw new UserNotFound();
   })
-  .then((user) => res.status(200).send(user))
+  .then((user) => res.status(ok).send(user))
   .catch((err) => {
     if (err.name === 'UserNotFound') {
       res.status(err.status).send(err);
     } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-      res.status(400).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
+      res.status(incorrectData).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
     } else {
-      res.status(500).send({ message: `Ошибка сервера ${err}` });
+      res.status(internalError).send({ message: `Ошибка сервера ${err}` });
     }
   });
 
 const getUsers = (req, res) => User.find({})
-  .then((user) => res.status(200).send({ user }))
+  .then((user) => res.status(ok).send({ user }))
   .catch((err) => {
-    res.status(500).send({ message: `Ошибка сервера ${err}` });
+    res.status(internalError).send({ message: `Ошибка сервера ${err}` });
   });
 
 const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
-    .then((user) => res.status(201).send({ user }))
+    .then((user) => res.status(created).send({ user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
+        res.status(incorrectData).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
       } else {
-        res.status(500).send({ message: `Ошибка сервера ${err}` });
+        res.status(internalError).send({ message: `Ошибка сервера ${err}` });
       }
     });
 };
@@ -54,9 +57,9 @@ const updateProfile = (req, res) => {
       if (err.name === 'UserNotFound') {
         res.status(err.status).send(err);
       } else if (err.name === 'ValidationError') {
-        res.status(400).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
+        res.status(incorrectData).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
       } else {
-        res.status(500).send({ message: `Ошибка сервера ${err}` });
+        res.status(internalError).send({ message: `Ошибка сервера ${err}` });
       }
     });
 };
@@ -80,7 +83,7 @@ const updateAvatar = (req, res) => {
       if (err.name === 'UserNotFound') {
         res.status(err.status).send(err);
       } else {
-        res.status(500).send({ message: `Ошибка сервера ${err}` });
+        res.status(internalError).send({ message: `Ошибка сервера ${err}` });
       }
     });
 };

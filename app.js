@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
+const { notFound } = require('./custom errors/error_status');
 // Слушаем 3000 порт
 const { PORT = 3000 } = process.env;
 
@@ -23,8 +24,8 @@ app.use((req, res, next) => {
 });
 app.use('/', usersRouter);
 app.use('/', cardsRouter);
-app.patch('*', (req, res) => {
-  res.status(404).send({ message: '404 Страница не найдена' });
+app.use('*', (req, res) => {
+  res.status(notFound).send({ message: '404 Страница не найдена' });
 });
 
 app.listen(PORT, () => {
