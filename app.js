@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 });
 app.use('/', usersRouter);
 app.use('/', cardsRouter);
-app.get('*', (req, res) => {
+app.patch('*', (req, res) => {
   res.status(404).send({ message: '404 Страница не найдена' });
 });
 
