@@ -1,4 +1,3 @@
-/* eslint-disable linebreak-style */
 const ApplicationError = require('./ApplicationError');
 
 class UserNotFound extends ApplicationError {

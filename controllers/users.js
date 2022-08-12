@@ -1,8 +1,7 @@
-/* eslint-disable linebreak-style */
 const User = require('../models/user');
 const UserNotFound = require('../custom errors/UserNotFound');
 
-const getUser = (req, res) => User.findById(req.params.id)
+const getUser = (req, res) => User.findById(req.params.userId)
   .orFail(() => {
     throw new UserNotFound();
   })
@@ -34,4 +33,54 @@ const createUser = (req, res) => {
     });
 };
 
-module.exports = { createUser, getUser, getUsers };
+const updateProfile = (req, res) => {
+  const { name, about } = req.body;
+  User.findByIdAndUpdate(
+    req.user._id,
+    { name, about },
+    {
+      new: true,
+      runValidators: true,
+      upsert: false,
+    },
+  )
+    .orFail(() => {
+      throw new UserNotFound();
+    })
+    .then((user) => res.status(200).send({ user }))
+    .catch((err) => {
+      if (err.name === 'UserNotFound') {
+        res.status(err.status).send(err);
+      } else {
+        res.status(500).send({ message: `Ошибка сервера ${err}` });
+      }
+    });
+};
+
+const updateAvatar = (req, res) => {
+  const { avatar } = req.body;
+  User.findByIdAndUpdate(
+    req.user._id,
+    { avatar },
+    {
+      new: true,
+      runValidators: true,
+      upsert: false,
+    },
+  )
+    .orFail(() => {
+      throw new UserNotFound();
+    })
+    .then((user) => res.status(200).send({ user }))
+    .catch((err) => {
+      if (err.name === 'UserNotFound') {
+        res.status(err.status).send(err);
+      } else {
+        res.status(500).send({ message: `Ошибка сервера ${err}` });
+      }
+    });
+};
+
+module.exports = {
+  createUser, getUser, getUsers, updateProfile, updateAvatar,
+};
