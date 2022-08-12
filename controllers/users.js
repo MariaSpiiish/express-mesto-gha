@@ -51,6 +51,8 @@ const updateProfile = (req, res) => {
     .catch((err) => {
       if (err.name === 'UserNotFound') {
         res.status(err.status).send(err);
+      } else if (err.name === 'ValidationError') {
+        res.status(400).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
       } else {
         res.status(500).send({ message: `Ошибка сервера ${err}` });
       }
