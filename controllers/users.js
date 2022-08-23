@@ -26,21 +26,29 @@ const getUsers = (req, res, next) => User.find({})
   .catch(next);
 
 const createUser = (req, res, next) => {
-  bcrypt.hash(req.body.password, 10)
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  bcrypt.hash(password, 10)
     .then((hash) => User.create({
-      name: req.body.name,
-      about: req.body.about,
-      avatar: req.body.avatar,
-      email: req.body.email,
+      name,
+      about,
+      avatar,
+      email,
       password: hash,
     }))
-    .then((user) => res.status(created).send({ user }))
+    .then(() => res.status(created).send({
+      user: {
+        name, about, avatar, email,
+      },
+    }))
     .catch((err) => {
       if (err.code === 11000) {
         return next(new DuplicateError());
       }
       if (err.name === 'ValidationError') {
-        return next(new BadRequest('Переданы некорректные данные при запросе пользователя'));
+        return next(new BadRequest('Переданы некорректные данные при создании пользователя'));
       }
       return next(err);
     });
