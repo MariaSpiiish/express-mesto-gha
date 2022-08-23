@@ -38,11 +38,7 @@ const createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then(() => res.status(created).send({
-      user: {
-        name, about, avatar, email,
-      },
-    }))
+    .then((user) => res.status(created).send({ user }))
     .catch((err) => {
       if (err.code === 11000) {
         return next(new DuplicateError());

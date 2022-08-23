@@ -21,10 +21,11 @@ app.use(express.json());
 
 app.post('/signup', celebrate({
   body: Joi.object().keys({
-    email: Joi.string().required().min(2).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/i),
-    password: Joi.string().required(),
+    name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
     avatar: Joi.string().regex(/https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,}/i),
+    email: Joi.string().required().min(2).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/i),
+    password: Joi.string().required(),
   }),
 }), createUser);
 
@@ -33,13 +34,22 @@ app.post('/signin', login);
 app.use(auth);
 app.use('/', usersRouter);
 app.use('/', cardsRouter);
+
 app.use('*', (req, res) => {
   res.status(notFound).send({ message: '404 Страница не найдена' });
 });
+
 app.use(errors());
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
-  res.status(statusCode).send({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
+
+  res
+    .status(statusCode)
+    .send({
+      message: statusCode === 500
+        ? 'На сервере произошла ошибка'
+        : message,
+    });
   next();
 });
 

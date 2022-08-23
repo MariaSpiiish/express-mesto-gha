@@ -30,10 +30,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    minlength: [2, 'Минимум 2 символа'],
+    minlength: 2,
     validate(value) {
       if (!validator.isEmail(value)) {
-        throw new BadRequest();
+        throw new BadRequest('Некорректный email');
       }
     },
   },

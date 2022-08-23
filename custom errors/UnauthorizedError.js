@@ -1,7 +1,7 @@
 class UnauthorizedError extends Error {
   constructor(message = 'Неправильные почта или пароль') {
     super();
-    this.status = 401;
+    this.statusCode = 401;
     this.message = message;
     this.name = this.constructor.name;
   }
