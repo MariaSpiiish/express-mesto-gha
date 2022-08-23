@@ -5,6 +5,7 @@ const {
   ok, created,
 } = require('../custom errors/error_status');
 const BadRequest = require('../custom errors/BadRequest');
+const UnauthorizedError = require('../custom errors/UnauthorizedError');
 
 const deleteCard = (req, res, next) => {
   const { authorization } = req.headers;
@@ -18,20 +19,13 @@ const deleteCard = (req, res, next) => {
       throw new NotFound('Карточка не найдена');
     })
     .then((card) => {
-      if (card.owner.toString() === req.user._id) {
-        Card.findByIdAndRemove(req.params.cardId)
-          .then(res.status(ok).send({ message: 'Карточка удалена' }));
+      if (card.owner.toString() !== req.user._id) {
+        return next(new UnauthorizedError('Нельзя удалить чужую карточку'));
       }
+      return card.remove()
+        .then(() => res.status(ok).send({ message: 'Карточка удалена' }));
     })
-    .catch((err) => {
-      if (err.name === 'NotFound') {
-        return res.status(err.statusCode).send(err);
-      }
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
-        return next(new BadRequest('Переданы некорректные данные при удалении карточки'));
-      }
-      return next(err);
-    });
+    .catch(next);
 };
 
 const getCards = (req, res, next) => Card.find({})
