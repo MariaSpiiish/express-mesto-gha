@@ -29,7 +29,12 @@ app.post('/signup', celebrate({
   }),
 }), createUser);
 
-app.post('/signin', login);
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().min(2).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/i),
+    password: Joi.string().required(),
+  }),
+}), login);
 
 app.use(auth);
 app.use('/', usersRouter);
