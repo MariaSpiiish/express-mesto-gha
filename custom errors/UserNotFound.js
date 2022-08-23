@@ -1,6 +1,6 @@
-const ApplicationError = require('./ApplicationError');
+const UnauthorizedError = require('./UnauthorizedError');
 
-class UserNotFound extends ApplicationError {
+class UserNotFound extends UnauthorizedError {
   constructor() {
     super(404, 'Пользователь не найден');
   }

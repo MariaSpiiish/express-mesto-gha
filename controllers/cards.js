@@ -1,23 +1,65 @@
+const jwt = require('jsonwebtoken');
 const Card = require('../models/card');
 const CardNotFound = require('../custom errors/CardNotFound');
 const {
   ok, created, incorrectData, internalError,
 } = require('../custom errors/error_status');
 
-const deleteCard = (req, res) => Card.findByIdAndRemove(req.params.cardId)
-  .orFail(() => {
-    throw new CardNotFound();
-  })
-  .then((card) => res.status(ok).send(card))
-  .catch((err) => {
-    if (err.name === 'CardNotFound') {
-      res.status(err.status).send(err);
-    } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-      res.status(incorrectData).send({ message: `Переданы некорректные данные при создании пользователя ${err}` });
-    } else {
-      res.status(internalError).send({ message: `Ошибка сервера ${err}` });
-    }
-  });
+// const deleteCard = (req, res) => {
+//   const { authorization } = req.headers;
+//   const token = authorization.replace('Bearer ', '');
+//   const payload = jwt.verify(token, 'some-secret-key');
+
+//   req.user = payload;
+//   return Card.findByIdAndRemove(req.params.cardId)
+//     .orFail(() => {
+//       throw new CardNotFound();
+//     })
+//     .then((card) => {
+//       if (card.owner.toString() === req.user._id) {
+//         return res.status(ok).send({ message: 'Карточка удалена' });
+//       }
+//       throw new Error();
+//     })
+//     .catch((err) => {
+//       if (err.name === 'CardNotFound') {
+//         res.status(err.status).send(err);
+//       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+//         res.status(incorrectData).send({
+// message: `Переданы некорректные данные при удалении карточки ${err}` });
+//       } else {
+//         res.status(internalError).send({ message: `Ошибка сервера ${err}` });
+//       }
+//     });
+// };
+
+const deleteCard = (req, res) => {
+  const { authorization } = req.headers;
+  const token = authorization.replace('Bearer ', '');
+  const payload = jwt.verify(token, 'some-secret-key');
+
+  req.user = payload;
+
+  return Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new CardNotFound();
+    })
+    .then((card) => {
+      if (card.owner.toString() === req.user._id) {
+        Card.findByIdAndRemove(req.params.cardId)
+          .then(res.status(ok).send({ message: 'Карточка удалена' }));
+      }
+    })
+    .catch((err) => {
+      if (err.name === 'CardNotFound') {
+        res.status(err.status).send(err);
+      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+        res.status(incorrectData).send({ message: `Переданы некорректные данные при удалении карточки ${err}` });
+      } else {
+        res.status(internalError).send({ message: `Ошибка сервера ${err}` });
+      }
+    });
+};
 
 const getCards = (req, res) => Card.find({})
   .then((cards) => res.status(ok).send({ cards }))
