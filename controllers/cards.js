@@ -5,7 +5,7 @@ const {
   ok, created,
 } = require('../custom errors/error_status');
 const BadRequest = require('../custom errors/BadRequest');
-const UnauthorizedError = require('../custom errors/UnauthorizedError');
+const Forbidden = require('../custom errors/Forbidden');
 
 const deleteCard = (req, res, next) => {
   const { authorization } = req.headers;
@@ -20,7 +20,7 @@ const deleteCard = (req, res, next) => {
     })
     .then((card) => {
       if (card.owner.toString() !== req.user._id) {
-        return next(new UnauthorizedError('Нельзя удалить чужую карточку'));
+        return next(new Forbidden('Нельзя удалить чужую карточку'));
       }
       return card.remove()
         .then(() => res.status(ok).send({ message: 'Карточка удалена' }));
