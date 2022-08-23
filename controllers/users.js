@@ -13,10 +13,10 @@ const getUser = (req, res, next) => User.findById(req.params.userId)
   })
   .then((user) => res.status(ok).send(user))
   .catch((err) => {
-    console.log(err);
     if (err.name === 'NotFound') {
       return res.status(err.statusCode).send(err);
-    } if (err.name === 'ValidationError' || err.name === 'CastError') {
+    }
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
       return next(new BadRequest('Переданы некорректные данные при запросе пользователя'));
     }
     return next(err);
