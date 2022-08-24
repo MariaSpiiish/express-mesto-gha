@@ -6,6 +6,7 @@ const NotFound = require('../custom errors/NotFound');
 const { ok, created } = require('../custom errors/error_status');
 const BadRequest = require('../custom errors/BadRequest');
 const DuplicateError = require('../custom errors/DuplicateError');
+const UnauthorizedError = require('../custom errors/UnauthorizedError');
 
 const getUser = (req, res, next) => User.findById(req.params.userId)
   .orFail(() => {
@@ -13,9 +14,6 @@ const getUser = (req, res, next) => User.findById(req.params.userId)
   })
   .then((user) => res.status(ok).send(user))
   .catch((err) => {
-    if (err.name === 'NotFound') {
-      return res.status(err.statusCode).send(err);
-    }
     if (err.name === 'ValidationError' || err.name === 'CastError') {
       return next(new BadRequest('Переданы некорректные данные при запросе пользователя'));
     }
@@ -71,9 +69,6 @@ const updateProfile = (req, res, next) => {
     })
     .then((user) => res.status(200).send({ user }))
     .catch((err) => {
-      if (err.name === 'NotFound') {
-        return res.status(err.statusCode).send(err);
-      }
       if (err.name === 'ValidationError') {
         return next(new BadRequest('Переданы некорректные данные при обновлении данных пользователя'));
       }
@@ -97,53 +92,34 @@ const updateAvatar = (req, res, next) => {
     })
     .then((user) => res.status(200).send({ user }))
     .catch((err) => {
-      if (err.name === 'NotFound') {
-        return res.status(err.statusCode).send(err);
+      if (err.name === 'ValidationError') {
+        return next(new BadRequest('Переданы некорректные данные при обновлении данных пользователя'));
       }
       return next(err);
     });
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
       res.status(ok).send({ token });
     })
-    .catch((err) => {
-      res.status(401).send({ message: err.message });
-    });
+    .catch(() => next(new UnauthorizedError('Необходима авторизация')));
 };
 
-const getCurrentUser = (req, res, next) => {
-  const { authorization } = req.headers;
-  const token = authorization.replace('Bearer ', '');
-  let payload;
-
-  try {
-    payload = jwt.verify(token, 'some-secret-key');
-  } catch (err) {
-    return res.status(401).send({ message: 'Необходима авторизация' });
-  }
-
-  req.user = payload;
-
-  return User.findById(req.user)
-    .orFail(() => {
-      throw new NotFound('Пользователь не найден');
-    })
-    .then((user) => res.status(ok).send(user))
-    .catch((err) => {
-      if (err.name === 'NotFound') {
-        return res.status(err.statusCode).send(err);
-      }
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
-        return next(new BadRequest('Переданы некорректные данные при обновлении данных пользователя'));
-      }
-      return next(err);
-    });
-};
+const getCurrentUser = (req, res, next) => User.findById(req.user)
+  .orFail(() => {
+    throw new NotFound('Пользователь не найден');
+  })
+  .then((user) => res.status(ok).send(user))
+  .catch((err) => {
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      return next(new BadRequest('Переданы некорректные данные при обновлении данных пользователя'));
+    }
+    return next(err);
+  });
 
 module.exports = {
   createUser, getUser, getUsers, updateProfile, updateAvatar, login, getCurrentUser,

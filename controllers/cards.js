@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const Card = require('../models/card');
 const NotFound = require('../custom errors/NotFound');
 const {
@@ -7,26 +6,19 @@ const {
 const BadRequest = require('../custom errors/BadRequest');
 const Forbidden = require('../custom errors/Forbidden');
 
-const deleteCard = (req, res, next) => {
-  const { authorization } = req.headers;
-  const token = authorization.replace('Bearer ', '');
-  const payload = jwt.verify(token, 'some-secret-key');
-
-  req.user = payload;
-
-  return Card.findById(req.params.cardId)
-    .orFail(() => {
-      throw new NotFound('Карточка не найдена');
-    })
-    .then((card) => {
-      if (card.owner.toString() !== req.user._id) {
-        return next(new Forbidden('Нельзя удалить чужую карточку'));
-      }
-      return card.remove()
-        .then(() => res.status(ok).send({ message: 'Карточка удалена' }));
-    })
-    .catch(next);
-};
+const deleteCard = (req, res, next) => Card.findById(req.params.cardId)
+  .orFail(() => {
+    throw new NotFound('Карточка не найдена');
+  })
+  .then((card) => {
+    console.log(req.user._id);
+    if (card.owner.toString() !== req.user._id) {
+      return next(new Forbidden('Нельзя удалить чужую карточку'));
+    }
+    return card.remove()
+      .then(() => res.status(ok).send({ message: 'Карточка удалена' }));
+  })
+  .catch(next);
 
 const getCards = (req, res, next) => Card.find({})
   .then((cards) => res.status(ok).send({ cards }))
@@ -54,9 +46,6 @@ const likeCard = (req, res, next) => Card.findByIdAndUpdate(
   })
   .then((card) => res.status(ok).send({ card }))
   .catch((err) => {
-    if (err.name === 'NotFound') {
-      return res.status(err.statusCode).send(err);
-    }
     if (err.name === 'CastError') {
       return next(new BadRequest('Переданы некорректные данные при постановке лайка'));
     }
@@ -73,9 +62,6 @@ const dislikeCard = (req, res, next) => Card.findByIdAndUpdate(
   })
   .then((card) => res.status(ok).send({ card }))
   .catch((err) => {
-    if (err.name === 'NotFound') {
-      return res.status(err.statusCode).send(err);
-    }
     if (err.name === 'CastError') {
       return next(new BadRequest('Переданы некорректные данные при снятии лайка'));
     }
